@@ -11,7 +11,7 @@ export function SignOutButton({ className }: { className?: string }) {
     } catch {
       // ignore network error
     } finally {
-      // Always wipe Supabase cookies regardless of API success/failure
+      // Clear all Supabase auth cookies
       document.cookie.split(";").forEach((c) => {
         const name = c.split("=")[0].trim();
         if (name.startsWith("sb-")) {
@@ -19,6 +19,14 @@ export function SignOutButton({ className }: { className?: string }) {
           document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax; Secure`;
         }
       });
+      // Also clear localStorage session keys
+      try {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith("sb-")) localStorage.removeItem(key);
+        });
+      } catch {
+        // ignore if localStorage not available
+      }
       window.location.href = "/";
     }
   };

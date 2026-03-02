@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Building2, Calendar, BarChart3, Settings, Home } from "lucide-react";
 import { SignOutButton } from "@/components/ui/sign-out-button";
+import { MobilePartnerNav } from "@/components/layout/mobile-partner-nav";
 
 export default async function PartnerLayout({
   children,
@@ -106,9 +107,12 @@ export default async function PartnerLayout({
               <span className="text-gradient-gold">Vivah</span>Sthal
             </span>
           </Link>
-          <span className="text-xs font-semibold text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2.5 py-1 rounded-full">
-            Partner Portal
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-[var(--color-primary)] bg-[var(--color-primary)]/10 px-2.5 py-1 rounded-full">
+              Partner Portal
+            </span>
+            <MobilePartnerNav />
+          </div>
         </div>
 
         <div className="p-6 lg:p-8">{children}</div>

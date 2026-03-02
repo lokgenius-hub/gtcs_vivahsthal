@@ -96,8 +96,9 @@ export async function upgradeToVendor(): Promise<{ error: string | null }> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Not logged in" };
 
-    // Update profile role
-    const { error: profileError } = await supabase
+    // Use service client to bypass RLS on profiles table
+    const serviceClient = await createServiceClient();
+    const { error: profileError } = await serviceClient
       .from("profiles")
       .update({ role: "vendor" })
       .eq("id", user.id);
@@ -234,8 +235,14 @@ export async function checkAvailability(
 export async function createLead(formData: FormData) {
   const supabase = await createClient();
 
+  // Only accept venue_id when it's a real UUID (36-char format)
+  // Demo venue IDs like "1", "2" are not UUIDs and would cause a Postgres type error
+  const rawVenueId = formData.get("venue_id") as string | null;
+  const isValidUUID = rawVenueId &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawVenueId);
+
   const leadData = {
-    venue_id: formData.get("venue_id") as string || null,
+    venue_id: isValidUUID ? rawVenueId : null,
     customer_name: formData.get("customer_name") as string,
     customer_email: formData.get("customer_email") as string,
     customer_phone: formData.get("customer_phone") as string,

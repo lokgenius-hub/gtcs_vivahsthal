@@ -88,6 +88,14 @@ export function Navbar() {
           document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax; Secure`;
         }
       });
+      // Also clear localStorage session keys
+      try {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith("sb-")) localStorage.removeItem(key);
+        });
+      } catch {
+        // ignore
+      }
       setUser(null);
       setRole(undefined);
       setDropdownOpen(false);
