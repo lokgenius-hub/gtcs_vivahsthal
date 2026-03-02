@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, Building2, Calendar, BarChart3, Settings, Home, LogOut } from "lucide-react";
+import { Menu, X, Building2, Calendar, Settings, Home, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
-  { href: "/partner/dashboard", icon: BarChart3, label: "Overview" },
   { href: "/partner/venues", icon: Building2, label: "My Venues" },
   { href: "/partner/calendar", icon: Calendar, label: "Availability" },
   { href: "/partner/settings", icon: Settings, label: "Settings" },

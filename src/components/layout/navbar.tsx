@@ -191,7 +191,7 @@ export function Navbar() {
                       {/* Partner Portal — highlighted for vendors */}
                       {(effectiveRole === "vendor" || effectiveRole === "admin") && (
                         <Link
-                          href="/partner/dashboard"
+                          href="/partner/venues"
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-colors border-b border-gray-100"
                         >
@@ -296,7 +296,7 @@ export function Navbar() {
                       )}
                     </div>
                     {(effectiveRole === "vendor" || effectiveRole === "admin") && (
-                      <Link href="/partner/dashboard" onClick={() => setIsOpen(false)}>
+                      <Link href="/partner/venues" onClick={() => setIsOpen(false)}>
                         <Button className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white">
                           <LayoutDashboard className="h-4 w-4" /> Partner Portal
                         </Button>

@@ -15,9 +15,13 @@ export function middleware(request: NextRequest) {
     !isPublicPath && protectedPaths.some((p) => pathname.startsWith(p));
 
   if (isProtected) {
-    // Check for Supabase auth cookie (sb-<project-ref>-auth-token)
+    // Check for Supabase auth cookie.
+    // @supabase/ssr v0.5+ chunks large JWTs into multiple cookies:
+    //   sb-<ref>-auth-token        (small tokens, single cookie)
+    //   sb-<ref>-auth-token.0/1/2  (large tokens, chunked)
+    // We use .includes() so both forms are detected.
     const hasSession = request.cookies.getAll().some(
-      (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token")
+      (c) => c.name.startsWith("sb-") && c.name.includes("-auth-token")
     );
 
     if (!hasSession) {

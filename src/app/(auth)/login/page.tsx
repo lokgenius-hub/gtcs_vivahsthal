@@ -100,7 +100,7 @@ function LoginForm() {
           .single();
 
         if (profile?.role === "vendor") {
-          window.location.href = "/partner/dashboard";
+          window.location.href = "/partner/venues";
         } else if (profile?.role === "admin" || profile?.role === "rm") {
           window.location.href = "/admin/leads";
         } else {

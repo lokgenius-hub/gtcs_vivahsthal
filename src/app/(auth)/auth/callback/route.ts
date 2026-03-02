@@ -44,7 +44,7 @@ export async function GET(request: Request) {
           .single();
 
         if (profile?.role === "vendor") {
-          return NextResponse.redirect(`${origin}/partner/dashboard`);
+          return NextResponse.redirect(`${origin}/partner/venues`);
         } else if (profile?.role === "admin" || profile?.role === "rm") {
           return NextResponse.redirect(`${origin}/admin/leads`);
         }

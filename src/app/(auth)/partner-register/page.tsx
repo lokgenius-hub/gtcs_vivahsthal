@@ -75,7 +75,7 @@ export default function PartnerRegisterPage() {
       }
 
       // Full page reload so session cookies set by the server action are sent on the next request
-      window.location.href = "/partner/dashboard";
+      window.location.href = "/partner/venues";
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (
