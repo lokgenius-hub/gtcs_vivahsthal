@@ -1,0 +1,1 @@
+Get-Process -Name "node" | Stop-Process -Force; Write-Host "All node processes killed"
