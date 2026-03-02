@@ -75,22 +75,24 @@ export function Navbar() {
 
   const handleLogout = async () => {
     const supabase = createClient();
-    // Always clear the local session/cookies first (works even if Supabase is paused)
-    try {
-      await supabase.auth.signOut({ scope: "local" });
-    } catch {
-      // ignore
-    }
-    // Also attempt full server-side invalidation (best-effort)
     try {
       await supabase.auth.signOut();
     } catch {
-      // ignore – local session already cleared above
+      // If API call fails (e.g. Supabase paused), manually expire all sb-* cookies
+    } finally {
+      // Always wipe Supabase cookies regardless of API success/failure
+      document.cookie.split(";").forEach((c) => {
+        const name = c.split("=")[0].trim();
+        if (name.startsWith("sb-")) {
+          document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
+          document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax; Secure`;
+        }
+      });
+      setUser(null);
+      setRole(undefined);
+      setDropdownOpen(false);
+      window.location.href = "/";
     }
-    setUser(null);
-    setRole(undefined);
-    setDropdownOpen(false);
-    window.location.href = "/";
   };
 
   const displayName =

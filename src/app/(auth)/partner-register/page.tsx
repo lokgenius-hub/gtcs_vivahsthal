@@ -1,19 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, Phone, Building2 } from "lucide-react";
+import { Mail, Lock, User, Phone, Building2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { signUpUser } from "@/lib/actions";
+import { signUpUser, upgradeToVendor } from "@/lib/actions";
+import { createClient } from "@/lib/supabase/client";
 import { CITIES } from "@/lib/constants";
 
 export default function PartnerRegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [loggedInEmail, setLoggedInEmail] = useState<string | null>(null);
+  const [loggedInRole, setLoggedInRole] = useState<string | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Detect if user is already logged in
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setLoggedInEmail(user.email ?? null);
+        setLoggedInRole((user.user_metadata?.role as string) ?? "customer");
+      }
+      setCheckingAuth(false);
+    });
+  }, []);
+
+  const handleUpgrade = async () => {
+    setLoading(true);
+    setError("");
+    const result = await upgradeToVendor();
+    if (result.error) {
+      setError(result.error);
+      setLoading(false);
+      return;
+    }
+    window.location.href = "/partner/venues";
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -99,72 +127,120 @@ export default function PartnerRegisterPage() {
             </p>
           </div>
 
-          {/* Error */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-              {error}
+          {/* Already logged in as customer → show upgrade CTA */}
+          {!checkingAuth && loggedInEmail && loggedInRole !== "vendor" && loggedInRole !== "admin" && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <p className="text-sm text-blue-800 font-medium mb-1">
+                You&apos;re signed in as <span className="font-bold">{loggedInEmail}</span>
+              </p>
+              <p className="text-xs text-blue-600 mb-3">
+                Upgrade your existing account to a Vendor account — no new registration needed.
+              </p>
+              {error && (
+                <p className="text-xs text-red-600 mb-2">{error}</p>
+              )}
+              <Button onClick={handleUpgrade} loading={loading} className="w-full">
+                <ArrowRight className="h-4 w-4" />
+                Become a Partner Now
+              </Button>
+              <p className="text-xs text-gray-400 text-center mt-2">
+                Or{" "}
+                <button
+                  className="text-[var(--color-primary)] underline"
+                  onClick={() => setLoggedInEmail(null)}
+                >
+                  register with a different account
+                </button>
+              </p>
             </div>
           )}
 
-          {/* Success */}
-          {info && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 space-y-2">
-              <p className="font-medium">✅ {info}</p>
-              <Link
-                href="/login"
-                className="inline-block mt-1 text-[var(--color-primary)] font-semibold underline"
-              >
-                Go to Sign In →
+          {/* Already a vendor → go to dashboard */}
+          {!checkingAuth && loggedInEmail && (loggedInRole === "vendor" || loggedInRole === "admin") && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-center">
+              <p className="text-sm text-green-800 font-medium mb-3">
+                You&apos;re already registered as a partner!
+              </p>
+              <Link href="/partner/venues">
+                <Button className="w-full">
+                  <ArrowRight className="h-4 w-4" />
+                  Go to My Venues
+                </Button>
               </Link>
             </div>
           )}
 
-          {/* Form */}
-          {!info && (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <Input
-                name="full_name"
-                label="Your Name"
-                placeholder="Full name"
-                icon={<User className="h-4 w-4" />}
-                required
-              />
-              <Input
-                name="phone"
-                type="tel"
-                label="Phone Number"
-                placeholder="+91 XXXXX XXXXX"
-                icon={<Phone className="h-4 w-4" />}
-                required
-              />
-              <Input
-                name="email"
-                type="email"
-                label="Business Email"
-                placeholder="you@business.com"
-                icon={<Mail className="h-4 w-4" />}
-                required
-              />
-              <Select
-                name="city"
-                label="City"
-                options={CITIES.map((c) => ({ value: c, label: c }))}
-                placeholder="Select your city"
-              />
-              <Input
-                name="password"
-                type="password"
-                label="Password"
-                placeholder="Minimum 6 characters"
-                icon={<Lock className="h-4 w-4" />}
-                required
-                minLength={6}
-              />
+          {/* Show regular form only if not logged in (or overriding) */}
+          {(checkingAuth || !loggedInEmail) && (
+            <>
+              {/* Error */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                  {error}
+                </div>
+              )}
 
-              <Button type="submit" className="w-full" loading={loading}>
-                Register as Partner
-              </Button>
-            </form>
+              {/* Success */}
+              {info && (
+                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 space-y-2">
+                  <p className="font-medium">✅ {info}</p>
+                  <Link
+                    href="/login"
+                    className="inline-block mt-1 text-[var(--color-primary)] font-semibold underline"
+                  >
+                    Go to Sign In →
+                  </Link>
+                </div>
+              )}
+
+              {/* Form */}
+              {!info && (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <Input
+                    name="full_name"
+                    label="Your Name"
+                    placeholder="Full name"
+                    icon={<User className="h-4 w-4" />}
+                    required
+                  />
+                  <Input
+                    name="phone"
+                    type="tel"
+                    label="Phone Number"
+                    placeholder="+91 XXXXX XXXXX"
+                    icon={<Phone className="h-4 w-4" />}
+                    required
+                  />
+                  <Input
+                    name="email"
+                    type="email"
+                    label="Business Email"
+                    placeholder="you@business.com"
+                    icon={<Mail className="h-4 w-4" />}
+                    required
+                  />
+                  <Select
+                    name="city"
+                    label="City"
+                    options={CITIES.map((c) => ({ value: c, label: c }))}
+                    placeholder="Select your city"
+                  />
+                  <Input
+                    name="password"
+                    type="password"
+                    label="Password"
+                    placeholder="Minimum 6 characters"
+                    icon={<Lock className="h-4 w-4" />}
+                    required
+                    minLength={6}
+                  />
+
+                  <Button type="submit" className="w-full" loading={loading}>
+                    Register as Partner
+                  </Button>
+                </form>
+              )}
+            </>
           )}
 
           <div className="mt-6 text-center text-sm text-gray-500">

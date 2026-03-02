@@ -7,7 +7,12 @@ export const metadata = {
   description: "Search and discover the perfect wedding venue with advanced filters",
 };
 
-export default function VenuesPage() {
+export default async function VenuesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) {
+  const params = await searchParams;
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -36,7 +41,7 @@ export default function VenuesPage() {
             </div>
           }
         >
-          <VenueListings />
+          <VenueListings searchParams={params} />
         </Suspense>
       </div>
     </div>

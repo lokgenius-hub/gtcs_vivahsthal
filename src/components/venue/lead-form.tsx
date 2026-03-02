@@ -36,9 +36,11 @@ function EnquiryForm({
 }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const handleSubmit = async (formData: FormData) => {
     setLoading(true);
+    setFormError("");
     if (venueId) formData.set("venue_id", venueId);
     formData.set("source", trigger === "contact" ? "view_contact" : "check_availability");
     const result = await createLead(formData);
@@ -49,6 +51,8 @@ function EnquiryForm({
         onDone();
         onClose?.();
       }, 2500);
+    } else {
+      setFormError(result.error || "Failed to send enquiry. Please try again.");
     }
   };
 
@@ -91,6 +95,11 @@ function EnquiryForm({
         />
       </div>
       <Input name="message" label="Additional Requirements" placeholder="Any special requirements..." />
+      {formError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          {formError}
+        </div>
+      )}
       <Button type="submit" className="w-full" loading={loading}>
         {loading ? "Submitting..." : "Send Enquiry"}
       </Button>

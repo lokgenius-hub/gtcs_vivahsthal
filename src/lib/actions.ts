@@ -89,6 +89,30 @@ export async function signUpUser(formData: {
   }
 }
 
+/** Upgrade a logged-in customer account to vendor role */
+export async function upgradeToVendor(): Promise<{ error: string | null }> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not logged in" };
+
+    // Update profile role
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ role: "vendor" })
+      .eq("id", user.id);
+    if (profileError) return { error: profileError.message };
+
+    // Update auth user_metadata so JWT reflects new role immediately
+    await supabase.auth.updateUser({ data: { role: "vendor" } });
+
+    revalidatePath("/");
+    return { error: null };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "Unexpected error" };
+  }
+}
+
 
 export async function getVenues(params: VenueSearchParams = {}) {
   const supabase = await createClient();
