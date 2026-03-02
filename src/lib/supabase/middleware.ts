@@ -13,7 +13,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({ request });
@@ -25,17 +25,17 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Refresh session cookie — must be called for SSR auth to work
+  const { data: { user } } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
 
-  // ── Unauthenticated guard ─────────────────────────────────
-  // Public signup pages — anyone can register, no auth needed
+  // Public auth pages — skip all guards
   const publicPaths = ["/partner-register", "/partner/register"];
   const isPublicPath = publicPaths.some((p) => pathname.startsWith(p));
 
+  // Unauthenticated guard — redirect to login if not signed in
+  // Role checks are handled inside each protected layout (server components)
   const protectedPaths = ["/partner", "/admin"];
   const isProtected = !isPublicPath && protectedPaths.some((p) => pathname.startsWith(p));
 
@@ -44,32 +44,6 @@ export async function updateSession(request: NextRequest) {
     url.pathname = "/login";
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
-  }
-
-  // ── Role guard (only when logged in on truly protected pages) ────
-  if (user && isProtected) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const role = profile?.role as string | undefined;
-
-    // /admin routes → admin or rm only
-    if (pathname.startsWith("/admin") && role !== "admin" && role !== "rm") {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-
-    // /partner routes → vendor or admin only (not plain customer)
-    if (
-      pathname.startsWith("/partner") &&
-      role !== "vendor" &&
-      role !== "admin"
-    ) {
-      // Customer trying to access partner portal → redirect to venues
-      return NextResponse.redirect(new URL("/venues", request.url));
-    }
   }
 
   return supabaseResponse;
